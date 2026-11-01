@@ -40,3 +40,10 @@ Thumbs.db
 *.exe
 *.o
 >>>>>>> 82bf81f (Completed Task 1: C utility for image loading, resizing, and COE generation)
+image_to_coe.exe
+*.cache/
+*.hw/
+*.sim/
+*.runs/
+*.gen/
+*.ip_user_files/
