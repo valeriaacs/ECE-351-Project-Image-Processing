@@ -1,0 +1,20 @@
+
+Test 1: Increasing values
+Square: Dilation=90 Erosion=10 Edge=80
+Cross: Dilation=80 Erosion=20 Edge=60
+
+Test 2: Uniform values
+Square: Dilation=100 Erosion=100 Edge=0
+Cross: Dilation=100 Erosion=100 Edge=0
+
+Test 3: Corner extremes
+Square: Dilation=255 Erosion=0 Edge=255
+Cross: Dilation=50 Erosion=50 Edge=0
+
+Test 4: Center maximum
+Square: Dilation=255 Erosion=0 Edge=255
+Cross: Dilation=255 Erosion=0 Edge=255
+
+Test 5: All maximum values
+Square: Dilation=255 Erosion=255 Edge=0
+Cross: Dilation=255 Erosion=255 Edge=0
