@@ -1,98 +1,57 @@
 `timescale 1ns / 1ps
 
-// ============================================================================
-// Module Name:  sliding_window_3x3
-// Project:      Hardware-Accelerated BRAM Image Processing Pipeline
-// Target:       Basys 3 FPGA (Xilinx Artix-7 XC7A35T)
-// Description:  Generates a 3x3 pixel neighborhood matrix from a streaming
-//               8-bit grayscale pixel input. Uses two internal shift register
-//               line buffers to store two previous image rows.
-// Reference:    Digital Design and Computer Architecture (Harris & Harris)
-// ============================================================================
+module sliding_window_3x3 (
+    input  wire       clk,
+    input  wire       rst,
+    input  wire       valid_in,      // Connects to line_buffer.output_valid
+    input  wire [7:0] pixel_row_0,   // Row N   (Current/Bottom row from line_buffer)
+    input  wire [7:0] pixel_row_1,   // Row N-1 (Middle row from line_buffer)
+    input  wire [7:0] pixel_row_2,   // Row N-2 (Top/Oldest row from line_buffer)
 
-module sliding_window_3x3 #(
-    parameter IMG_WIDTH  = 320,  // Image width in pixels
-    parameter DATA_WIDTH = 8     // Pixel depth (8-bit grayscale)
-)(
-    // System Signals
-    input  wire                  clk,       // System clock
-    input  wire                  reset,     // Active-high synchronous/asynchronous reset
-    input  wire                  in_valid,  // Valid signal indicating incoming pixel data
-    input  wire [DATA_WIDTH-1:0] pixel_in,  // Streaming input pixel data
-    
-    // 3x3 Output Window Pixels
-    // Matrix orientation: p<row><column>
-    // [ p00  p01  p02 ]  <- Top row    (Oldest data)
-    // [ p10  p11  p12 ]  <- Middle row
-    // [ p20  p21  p22 ]  <- Bottom row (Newest data / Current input)
-    output reg  [DATA_WIDTH-1:0] p00, output reg  [DATA_WIDTH-1:0] p01, output reg  [DATA_WIDTH-1:0] p02,
-    output reg  [DATA_WIDTH-1:0] p10, output reg  [DATA_WIDTH-1:0] p11, output reg  [DATA_WIDTH-1:0] p12,
-    output reg  [DATA_WIDTH-1:0] p20, output reg  [DATA_WIDTH-1:0] p21, output reg  [DATA_WIDTH-1:0] p22,
-    
-    // Output Status
-    output reg                   out_valid  // High when 3x3 window contains valid image data
+    // 3x3 Pixel Window Outputs (Row-Major: p<row><col>)
+    output reg  [7:0] p00, p01, p02, // Top row    (Row N-2)
+    output reg  [7:0] p10, p11, p12, // Middle row (Row N-1, p11 = center pixel)
+    output reg  [7:0] p20, p21, p22, // Bottom row (Row N)
+    output reg        valid_out      // High when 3x3 window has 3 valid columns
 );
 
-    // ========================================================================
-    // Internal Memory Structures
-    // ========================================================================
-    // Shift-register arrays to buffer 2 full horizontal lines of the image
-    reg [DATA_WIDTH-1:0] line_buf1 [0:IMG_WIDTH-1]; // Line buffer for Row 1
-    reg [DATA_WIDTH-1:0] line_buf2 [0:IMG_WIDTH-1]; // Line buffer for Row 0
+    // Tracks horizontal column fill (requires 3 valid shifts for a full 3x3 matrix)
+    reg [1:0] col_fill_cnt;
 
-    // Loop iterator for register reset and line buffer shift operations
-    integer i;
-
-    // Tracker for initial pipeline filling latency
-    // Valid output occurs after receiving (2 * IMG_WIDTH + 2) pixels
-    reg [16:0] pixel_count;
-    localparam TOTAL_START_DELAY = (2 * IMG_WIDTH) + 2;
-
-    // ========================================================================
-    // Main Sequential Logic
-    // ========================================================================
-    always @(posedge clk or posedge reset) begin
-        if (reset) begin
-            // ----------------------------------------------------------------
-            // Reset state: Clear output window registers
-            // ----------------------------------------------------------------
-            p00 <= {DATA_WIDTH{1'b0}}; p01 <= {DATA_WIDTH{1'b0}}; p02 <= {DATA_WIDTH{1'b0}};
-            p10 <= {DATA_WIDTH{1'b0}}; p11 <= {DATA_WIDTH{1'b0}}; p12 <= {DATA_WIDTH{1'b0}};
-            p20 <= {DATA_WIDTH{1'b0}}; p21 <= {DATA_WIDTH{1'b0}}; p22 <= {DATA_WIDTH{1'b0}};
-
-            // Reset internal line buffers
-            for (i = 0; i < IMG_WIDTH; i = i + 1) begin
-                line_buf1[i] <= {DATA_WIDTH{1'b0}};
-                line_buf2[i] <= {DATA_WIDTH{1'b0}};
-            end
-
-            // Reset counters and status flags
-            pixel_count <= 17'd0;
-            out_valid   <= 1'b0;
-
-        end else if (in_valid) begin
-            // ----------------------------------------------------------------
-            // 1. Shift Column Registers (Horizontal movement leftward)
-            // ----------------------------------------------------------------
-            // Row 0 (Top row: feed from Line Buffer 2 output)
+    always @(posedge clk) begin
+        if (rst) begin
+            p00 <= 8'd0; p01 <= 8'd0; p02 <= 8'd0;
+            p10 <= 8'd0; p11 <= 8'd0; p12 <= 8'd0;
+            p20 <= 8'd0; p21 <= 8'd0; p22 <= 8'd0;
+            col_fill_cnt <= 2'd0;
+            valid_out    <= 1'b0;
+        end else if (valid_in) begin
+            // Shift left: col 0 <- col 1 <- col 2 <- new incoming column
+            // Top row (Row N-2)
             p00 <= p01;
             p01 <= p02;
-            p02 <= line_buf2[IMG_WIDTH-1];
+            p02 <= pixel_row_2;
 
-            // Row 1 (Middle row: feed from Line Buffer 1 output)
+            // Middle row (Row N-1)
             p10 <= p11;
             p11 <= p12;
-            p12 <= line_buf1[IMG_WIDTH-1];
+            p12 <= pixel_row_1;
 
-            // Row 2 (Bottom row: feed from current incoming pixel stream)
+            // Bottom row (Row N)
             p20 <= p21;
             p21 <= p22;
-            p22 <= pixel_in;
+            p22 <= pixel_row_0;
 
-            // ----------------------------------------------------------------
-            // 2. Shift Line Buffers (Vertical movement downward across rows)
-            // ----------------------------------------------------------------
-            // Line Buffer 1: Ingest new pixel into tap 0, shift existing right
-            line_buf1[0] <= pixel_in;
-            for (i = 1; i < IMG_WIDTH; i = i + 1) begin
-                line_buf1[i] <= line_buf1[i-
+            // Assert valid_out once 3 horizontal pixels have shifted in
+            if (col_fill_cnt < 2'd2) begin
+                col_fill_cnt <= col_fill_cnt + 2'd1;
+                valid_out    <= 1'b0;
+            end else begin
+                valid_out    <= 1'b1;
+            end
+        end else begin
+            valid_out <= 1'b0;
+        end
+    end
+
+endmodule
