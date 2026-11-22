@@ -1,0 +1,22 @@
+ECE 351 Option C - C reference results
+No  Test                                      Gradient     Pixel Valid  Result
+ 1  Uniform pixels                                   0         0     1  PASS
+ 2  Horizontal edge                                240       255     1  PASS
+ 3  Vertical edge                                  190       255     1  PASS
+ 4  Maximum gradient 510                           510       255     1  PASS
+ 5  Gradient equals threshold                       90         0     1  PASS
+ 6  Gradient exceeds threshold by 1                 90       255     1  PASS
+ 7  Zero gradient zero threshold                     0         0     1  PASS
+ 8  Gradient 1 threshold 0                           1       255     1  PASS
+ 9  Invert detected edge                           240         0     1  PASS
+10  Invert no-edge output                            0       255     1  PASS
+11  Grayscale bypass                               240       165     1  PASS
+12  Inverted grayscale bypass                      240        90     1  PASS
+13  Border suppression                             240         0     1  PASS
+14  Border with inversion                          240         0     1  PASS
+15  Border with grayscale bypass                   240       165     1  PASS
+16  Invalid input cycle                              0         0     0  PASS
+
+Data/control cases: 16
+Failures: 0
+Note: The two synchronous reset checks remain in tb_edge_alu.v.
