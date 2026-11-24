@@ -1,0 +1,74 @@
+Time resolution is 1 ps
+BRAM simulation memory initialized.
+Memory file: image_data.mem
+Total image pixels: 76800
+======================================
+ECE 351 - Week 8 Task 1
+Full Pipeline Integration Test
+======================================
+Image size: 320 x 240
+Expected input pixels: 76800
+Threshold: 50
+X FAIL: index=0 actual=1 expected=0
+X FAIL: index=1 actual=2 expected=1
+X FAIL: index=2 actual=3 expected=2
+X FAIL: index=3 actual=4 expected=3
+X FAIL: index=4 actual=5 expected=4
+Y FAIL: index=319 actual=1 expected=0
+PIXEL FAIL: index=334 actual=52 expected=53
+PIXEL FAIL: index=335 actual=53 expected=52
+PIXEL FAIL: index=350 actual=52 expected=53
+PIXEL FAIL: index=351 actual=53 expected=52
+PIXEL FAIL: index=366 actual=52 expected=53
+Y FAIL: index=639 actual=2 expected=1
+WINDOW FAIL: center=321 actual=53 expected=53
+First valid output at cycle 652
+WINDOW FAIL: center=322 actual=53 expected=53
+WINDOW FAIL: center=323 actual=53 expected=53
+WINDOW FAIL: center=332 actual=53 expected=53
+WINDOW FAIL: center=333 actual=53 expected=53
+Y FAIL: index=959 actual=3 expected=2
+BORDER FAIL: center=638 x=318 y=1 actual=1
+BORDER FAIL: center=640 x=0 y=2 actual=0
+Y FAIL: index=1279 actual=4 expected=3
+BORDER FAIL: center=958 x=318 y=2 actual=1
+BORDER FAIL: center=960 x=0 y=3 actual=0
+Y FAIL: index=1599 actual=5 expected=4
+BORDER FAIL: center=1278 x=318 y=3 actual=1
+
+======================================
+FULL PIPELINE VERIFICATION SUMMARY
+======================================
+BRAM input pixels:    76800
+Valid windows:        76158
+Processed outputs:    76158
+Correct ALU outputs:  76158
+Border windows:       474
+Detected edge pixels: 10268
+
+INDEPENDENT ERROR BREAKDOWN
+--------------------------------------
+BRAM pixel errors:    10634
+X coordinate errors:  76800
+Y coordinate errors:  240
+Window errors:        21789
+Border flag errors:   474
+Gradient errors:      0
+ALU pixel errors:     0
+Valid timing errors:  0
+Frame count errors:   0
+Total errors:         109937
+
+BRAM SHIFT DIAGNOSTICS
+--------------------------------------
+Shifted pixel matches: 76799
+Shifted pixel checks:  76799
+
+First input cycle:    6
+First output cycle:   652
+Frame completed:      1
+Startup latency:      646 cycles
+NOTE: Full 76800-pixel output coverage not achieved.
+RESULT: FAIL
+======================================
+$finish called at time : 768280 ns : File "C:/Users/alexl/Vivado_Projects/ECE351_Morphological_Edge_Detector/ECE351_Morphological_Edge_Detector.srcs/sim_1/imports/ECE351_week8/tb_full_pipeline.v" Line 584
